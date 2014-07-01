@@ -259,36 +259,37 @@ coeftest(ajuste.5, vcov=vcov4)
 
 ## Ajustes
 #### Todas as variaveis
-ajuste.1 <- lm(Q13 ~ P1+P3+P7+P25+P32+P33)
+library(AER)
+ajuste.1 <- lm(Q13 ~ P1+P3+P7+P25+P32+P33, data=variaveis.1)
 vcov1 <- vcovHC(ajuste.1, type=c('HC1'))
 coeftest(ajuste.1, vcov=vcov1)
 summary(ajuste.1)
 
 ## Somente renda
-ajuste.2 <- lm(Q13 ~ P33)
+ajuste.2 <- lm(Q13 ~ P33, data=variaveis.1)
 vcov2 <- vcovHC(ajuste.2, type=c('HC1'))
 coeftest(ajuste.2, vcov=vcov2)
 
 
-ajuste.3 <- lm(Q13 ~ P1+P33)
+ajuste.3 <- lm(Q13 ~ P1+P33, data=variaveis.1)
 vcov3 <- vcovHC(ajuste.3, type=c('HC1'))
 coeftest(ajuste.3, vcov=vcov3)
 
 
 ### as interações que propomos foram estatísticamente significativos.
-ajuste.4 <- lm(Q13 ~ P1 + P33 + P1*P33)
+ajuste.4 <- lm(Q13 ~ P1 + P33 + P1*P33, data=variaveis.1)
 vcov4 <- vcovHC(ajuste.4, type=c('HC1'))
 coeftest(ajuste.4, vcov=vcov4)
 
 
-ajuste.5 <- lm(Q13 ~ P1 + P33 + P32) 
+ajuste.5 <- lm(Q13 ~ P1 + P33 + P32, data=variaveis.1) 
 vcov5 <- vcovHC(ajuste.5, type=c('HC1'))
 coeftest(ajuste.5, vcov=vcov5)
 
-AIC.Matrix <- matrix(nrow=4,ncol=3)
-AIC.Matrix[,1] <- c("Ajuste","Ajuste1","Ajuste2","Ajuste3")
-AIC.Matrix[,2] <- c("AIC",AIC(ajuste.1),AIC(ajuste.2),AIC(ajuste.3))
-AIC.Matrix[,3] <- c("BIC",BIC(ajuste.1),BIC(ajuste.2),BIC(ajuste.3))
+AIC_BIC <- data.frame(AIC=rep(0,5), BIC=rep(0,5))
+AIC_BIC$AIC <- c(AIC(ajuste.1), AIC(ajuste.2), AIC(ajuste.3), AIC(ajuste.4), AIC(ajuste.5))
+AIC_BIC$BIC <- c(BIC(ajuste.1), BIC(ajuste.2), BIC(ajuste.3), BIC(ajuste.4), BIC(ajuste.5))
+rownames(AIC_BIC) <- c('Ajuste1', 'Ajuste2', 'Ajuste3', 'Ajuste4', 'Ajuste5')
 
 plot(ajuste.1$fitted.values,ajuste.1$residuals)
 plot(ajuste.2$fitted.values,ajuste.2$residuals)
@@ -317,3 +318,21 @@ acf(ajuste.2$residuals)
 acf(ajuste.3$residuals)
 
 # Se adicionarmos a variável ENEM conseguimos aumentar o R2 ajustado de 0.22 para 0.38. O que faz sentido pois ENEM também é uma prova para avaliar a capacidade do aluno. Entretanto não iremos utilizar esta variável neste estudo pois o intúito é avaliar os efeitos das características sócio-econômicas na nota do vestibular
+## Best subsets
+library(leaps)
+
+## Selecionando somente as variáveis mais escolhidas anteriormente
+unicamp <- subset(variaveis.1, select = c('P1', 'P3', 'P7', 'P25', 'P32', 'P33', 'Q13'))
+rownames(unicamp) <- NULL
+
+## Criando melhor subconjunto com os dados fornecidos
+regfit.full <- regsubsets(Q13 ~ ., data = unicamp, nvmax = 20)
+reg.summary <- summary(regfit.full)
+names(reg.summary)
+
+## Gráficos com sumários
+plot(reg.summary$cp, xlab = "Number of Variables", ylab = "Cp")
+which.min(reg.summary$cp)
+points(10, reg.summary$cp[10], pch = 20, col = "red")
+plot(regfit.full, scale = "Cp")
+coef(regfit.full, 8)
