@@ -6,7 +6,9 @@ library(reshape2)
 library(extRemes)
 library(AER)
 library(car)
-library(ggplot2)
+library(MASS)
+library(gridExtra)
+
 
 ## Funções necessárias
 convert.magic <- function(obj, type){
@@ -321,18 +323,18 @@ save(out, file='ind_qui_quadrado.rda')
 
 ## Ajustes
 #### Todas as variaveis
-ajuste.1 <- lm(Q13 ~ P1+P3+P7+P11+P25+P32+P33, data=variaveis.1)
+ajuste.1 <- lm(Q13 ~ P1+P3+P7+P11+P25+P32+P33, data=unicamp)
 vcov1 <- vcovHC(ajuste.1, type=c('HC1'))
 coeftest(ajuste.1, vcov=vcov1)
 summary(ajuste.1)
 
 ## Somente renda
-ajuste.2 <- lm(Q13 ~ P33, data=variaveis.1)
+ajuste.2 <- lm(Q13 ~ P33, data=unicamp)
 vcov2 <- vcovHC(ajuste.2, type=c('HC1'))
 coeftest(ajuste.2, vcov=vcov2)
 
 ## Renda e sexo
-ajuste.3 <- lm(Q13 ~ P1+P33, data=variaveis.1)
+ajuste.3 <- lm(Q13 ~ P1+P33, data=unicamp)
 vcov3 <- vcovHC(ajuste.3, type=c('HC1'))
 coeftest(ajuste.3, vcov=vcov3)
 
