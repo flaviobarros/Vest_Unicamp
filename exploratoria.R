@@ -5,6 +5,7 @@ library(ggplot2)
 library(reshape2)
 library(extRemes)
 library(AER)
+library(car)
 
 ## Funções necessárias
 convert.magic <- function(obj, type){
@@ -267,6 +268,23 @@ ajuste.5 <- lm(Q13 ~ OPC1 +  social2.zero2$P1 +  social2.zero2$P2 +  social2.zer
 vcov5 <- vcovHC(ajuste.5, type=c('HC1'))
 coeftest(ajuste.5, vcov=vcov4)
 
+## Recodificação das variáveis
+unicamp$P3 <- as.factor(ifelse(unicamp$P3==1,1,0)) ## Solteio vs resto
+levels(unicamp$P3) <- c('outros', 'solteiro')
+
+unicamp$P7 <- as.factor(ifelse(unicamp$P7==1,1,0)) ## Ensino Particular vs resto
+levels(unicamp$P7) <- c('outros', 'particular')
+
+unicamp$P25 <- recode(unicamp$P25, as.factor.result = T, 
+                      'c(1,2,3)=1; c(4,5,6)=2; c(7,8,9)=3')
+levels(unicamp$P25) <- c('baixo', 'médio', 'alto')
+
+unicamp$P32 <- recode(unicamp$P32, as.factor.result = T,
+                      'c(1,2,3,4,5,6)=1; c(7)=2; c(8,9)=3')
+levels(unicamp$P32) <- c('baixo', 'médio', 'superior')
+
+unicamp$P33 <- as.factor(ifelse(unicamp$P33==1,1,0))
+levels(unicamp$P33) <- c('sim', 'não')
 
 ## Ajustes
 #### Todas as variaveis
@@ -295,6 +313,12 @@ coeftest(ajuste.4, vcov=vcov4)
 ajuste.5 <- lm(Q13 ~ P1 + P33 + P32, data=variaveis.1) 
 vcov5 <- vcovHC(ajuste.5, type=c('HC1'))
 coeftest(ajuste.5, vcov=vcov5)
+
+## Criando as tabelas com os coeficientes
+tabela <- matrix(rep(NA, 37*5), ncol=5, nrow=37)
+tabela[,1] <- ajuste.1$coefficients
+tabela[,2] <- ajuste.2$coefficients
+tabela[,3] <- ajuste.3$coefficients
 
 AIC_BIC <- data.frame(AIC=rep(0,5), BIC=rep(0,5))
 AIC_BIC$AIC <- c(AIC(ajuste.1), AIC(ajuste.2), AIC(ajuste.3), AIC(ajuste.4), AIC(ajuste.5))
