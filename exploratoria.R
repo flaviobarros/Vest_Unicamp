@@ -6,6 +6,7 @@ library(reshape2)
 library(extRemes)
 library(AER)
 library(car)
+library(ggplot2)
 
 ## Funções necessárias
 convert.magic <- function(obj, type){
@@ -268,6 +269,18 @@ ajuste.5 <- lm(Q13 ~ OPC1 +  social2.zero2$P1 +  social2.zero2$P2 +  social2.zer
 vcov5 <- vcovHC(ajuste.5, type=c('HC1'))
 coeftest(ajuste.5, vcov=vcov4)
 
+## Selecionando somente as variáveis mais escolhidas anteriormente
+unicamp <- subset(variaveis.1, select = c('P1', 'P3', 'P7', 'P11','P25', 'P32', 'P33', 'Q13'))
+rownames(unicamp) <- NULL
+unicamp <- sapply(unicamp, function(x) {
+  
+  ifelse(x==0, NA,x)
+})
+
+## Seleciona somente casos completos
+unicamp <- data.frame(unicamp[complete.cases(unicamp),])
+unicamp[, c('P1', 'P3','P7', 'P11','P25', 'P32', 'P33')] <- convert.magic(unicamp[, c('P1', 'P3', 'P7', 'P11','P25', 'P32', 'P33')], "factor")
+
 ## Recodificação das variáveis
 unicamp$P3 <- as.factor(ifelse(unicamp$P3==1,1,0)) ## Solteio vs resto
 levels(unicamp$P3) <- c('outros', 'solteiro')
@@ -281,14 +294,34 @@ levels(unicamp$P25) <- c('baixo', 'médio', 'alto')
 
 unicamp$P32 <- recode(unicamp$P32, as.factor.result = T,
                       'c(1,2,3,4,5,6)=1; c(7)=2; c(8,9)=3')
+
 levels(unicamp$P32) <- c('baixo', 'médio', 'superior')
 
 unicamp$P33 <- as.factor(ifelse(unicamp$P33==1,1,0))
 levels(unicamp$P33) <- c('sim', 'não')
 
+levels(unicamp$P11) <- c('fez cursinho', 'não fez cursinho')
+levels(unicamp$P1) <- c('homem', 'mulher')
+save(unicamp, file='unicamp.rda')
+
+## Medindo associações entre as variáveis categóricas
+# Colunas a serem utilizadas
+columns <- 1:7
+vars <- names(unicamp)[1:7]
+
+# say you need to know which ones are associated with each other.
+out <-  apply( combn(columns,2),2,function(x){
+  chisq.test(table(unicamp[,x[1]],unicamp[,x[2]]),correct=F)$p.value
+})
+
+out <- cbind(as.data.frame(t(combn(vars,2))),out)
+colnames(out) <- c('Var1', 'Var2', 'pvalor')
+out$pvalor <- round(out$pvalor, digits=4)
+save(out, file='ind_qui_quadrado.rda')
+
 ## Ajustes
 #### Todas as variaveis
-ajuste.1 <- lm(Q13 ~ P1+P3+P7+P25+P32+P33, data=variaveis.1)
+ajuste.1 <- lm(Q13 ~ P1+P3+P7+P11+P25+P32+P33, data=variaveis.1)
 vcov1 <- vcovHC(ajuste.1, type=c('HC1'))
 coeftest(ajuste.1, vcov=vcov1)
 summary(ajuste.1)
@@ -298,11 +331,10 @@ ajuste.2 <- lm(Q13 ~ P33, data=variaveis.1)
 vcov2 <- vcovHC(ajuste.2, type=c('HC1'))
 coeftest(ajuste.2, vcov=vcov2)
 
-
+## Renda e sexo
 ajuste.3 <- lm(Q13 ~ P1+P33, data=variaveis.1)
 vcov3 <- vcovHC(ajuste.3, type=c('HC1'))
 coeftest(ajuste.3, vcov=vcov3)
-
 
 ### as interações que propomos foram estatísticamente significativos.
 ajuste.4 <- lm(Q13 ~ P1 + P33 + P1*P33, data=variaveis.1)
@@ -355,18 +387,6 @@ acf(ajuste.3$residuals)
 ## Best subsets
 library(leaps)
 
-## Selecionando somente as variáveis mais escolhidas anteriormente
-unicamp <- subset(variaveis.1, select = c('P1', 'P3', 'P7', 'P25', 'P32', 'P33', 'Q13'))
-rownames(unicamp) <- NULL
-unicamp <- sapply(unicamp, function(x) {
-  
-  ifelse(x==0, NA,x)
-})
-
-## Seleciona somente casos completos
-unicamp <- data.frame(unicamp[complete.cases(unicamp),])
-unicamp[, c('P1', 'P3', 'P7', 'P25', 'P32', 'P33')] <- convert.magic(unicamp[, c('P1', 'P3', 'P7', 'P25', 'P32', 'P33')], "factor")
-
 ## Criando melhor subconjunto com os dados fornecidos
 regfit.full <- regsubsets(Q13 ~ ., data = unicamp, nvmax = 30)
 reg.summary <- summary(regfit.full)
@@ -378,3 +398,7 @@ which.min(reg.summary$cp)
 points(10, reg.summary$cp[10], pch = 20, col = "red")
 plot(regfit.full, scale = "Cp")
 coef(regfit.full, 6)
+
+## Aplicando stepwise com todos os modelos e interações
+regfit.fwd = regsubsets(Q13 ~ (.)^2, data = unicamp, method = "forward")
+summary(regfit.fwd)
