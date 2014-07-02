@@ -4,6 +4,7 @@ library(psych)
 library(ggplot2) 
 library(reshape2)
 library(extRemes)
+library(AER)
 
 ## Funções necessárias
 convert.magic <- function(obj, type){
@@ -269,7 +270,6 @@ coeftest(ajuste.5, vcov=vcov4)
 
 ## Ajustes
 #### Todas as variaveis
-library(AER)
 ajuste.1 <- lm(Q13 ~ P1+P3+P7+P25+P32+P33, data=variaveis.1)
 vcov1 <- vcovHC(ajuste.1, type=c('HC1'))
 coeftest(ajuste.1, vcov=vcov1)
