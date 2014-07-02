@@ -5,7 +5,7 @@
 #
 # Obtém resíduos studentizado do modelo
 
-graficos <- function(fit.model) {
+graficos1 <- function(fit.model) {
   
   
   tsi <- studres(fit.model)
@@ -21,7 +21,8 @@ graficos <- function(fit.model) {
     ylab("Resíduo Studentizado") +
     ylim(b-1,a+1) +
     geom_abline(intercept=2, slope=0, size=1, col='red') +
-    geom_abline(intercept=-2, slope=0, size=1, col='red')
+    geom_abline(intercept=-2, slope=0, size=1, col='red') +
+    geom_smooth(method = "loess")
   
   ## Faz o plot do resíduo studentizado pelo valor ajustado
   df <- data.frame(x = fitted(fit.model),y=tsi)
@@ -31,7 +32,8 @@ graficos <- function(fit.model) {
     ylab("Resíduo Studentizado") +
     ylim(c(b-1,a+1)) +
     geom_abline(intercept=2, slope=0, size=1, col='red') +
-    geom_abline(intercept=-2, slope=0, size=1, col='red')
+    geom_abline(intercept=-2, slope=0, size=1, col='red') +
+    geom_smooth(method = "loess")
  
   ## Boxplot do resíduo studentizado
   #g3 <- ggplot(df, aes(y=y,x=x)) + geom_boxplot()
