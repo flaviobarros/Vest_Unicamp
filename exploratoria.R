@@ -5,6 +5,16 @@ library(ggplot2)
 library(reshape2)
 library(extRemes)
 
+## Funções necessárias
+convert.magic <- function(obj, type){
+  FUN1 <- switch(type,
+                 character = as.character,
+                 numeric = as.numeric,
+                 factor = as.factor)
+  out <- lapply(obj, FUN1)
+  as.data.frame(out)
+}
+
 ## Lendo o conjunto de dados
 fase1 <- read.delim(file='V2000_Fase1.txt')
 fase2 <- read.delim(file='V2000_Fase2.txt')
@@ -324,9 +334,17 @@ library(leaps)
 ## Selecionando somente as variáveis mais escolhidas anteriormente
 unicamp <- subset(variaveis.1, select = c('P1', 'P3', 'P7', 'P25', 'P32', 'P33', 'Q13'))
 rownames(unicamp) <- NULL
+unicamp <- sapply(unicamp, function(x) {
+  
+  ifelse(x==0, NA,x)
+})
+
+## Seleciona somente casos completos
+unicamp <- data.frame(unicamp[complete.cases(unicamp),])
+unicamp[, c('P1', 'P3', 'P7', 'P25', 'P32', 'P33')] <- convert.magic(unicamp[, c('P1', 'P3', 'P7', 'P25', 'P32', 'P33')], "factor")
 
 ## Criando melhor subconjunto com os dados fornecidos
-regfit.full <- regsubsets(Q13 ~ ., data = unicamp, nvmax = 20)
+regfit.full <- regsubsets(Q13 ~ ., data = unicamp, nvmax = 30)
 reg.summary <- summary(regfit.full)
 names(reg.summary)
 
@@ -335,4 +353,4 @@ plot(reg.summary$cp, xlab = "Number of Variables", ylab = "Cp")
 which.min(reg.summary$cp)
 points(10, reg.summary$cp[10], pch = 20, col = "red")
 plot(regfit.full, scale = "Cp")
-coef(regfit.full, 8)
+coef(regfit.full, 6)
